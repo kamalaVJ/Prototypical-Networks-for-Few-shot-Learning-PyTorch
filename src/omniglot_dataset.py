@@ -32,7 +32,7 @@ class OmniglotDataset(data.Dataset):
     raw_folder = 'raw'
     processed_folder = 'data'
 
-    def __init__(self, mode='train', root='..' + os.sep + 'dataset', transform=None, target_transform=None, download=True):
+    def __init__(self, mode='train', root='..' + os.sep + 'dataset', transform=None, target_transform=None, download=False):
         '''
         The items are (filename,category). The index of all the categories can be found in self.idx_classes
         Args:
@@ -54,10 +54,13 @@ class OmniglotDataset(data.Dataset):
                 'Dataset not found. You can use download=True to download it')
         self.classes = get_current_classes(os.path.join(
             self.root, self.splits_folder, mode + '.txt'))
+        #print(self.classes)
         self.all_items = find_items(os.path.join(
             self.root, self.processed_folder), self.classes)
 
         self.idx_classes = index_classes(self.all_items)
+        #print(self.idx_classes)
+        #print(len(self.all_items))
 
         paths, self.y = zip(*[self.get_path_label(pl)
                               for pl in range(len(self))])
@@ -152,6 +155,7 @@ def index_classes(items):
     idx = {}
     for i in items:
         if (not i[1] + i[-1] in idx):
+            print('i',i[1] + i[-1])
             idx[i[1] + i[-1]] = len(idx)
     print("== Dataset: Found %d classes" % len(idx))
     return idx
