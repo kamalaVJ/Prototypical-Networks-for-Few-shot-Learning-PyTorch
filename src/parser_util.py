@@ -18,12 +18,12 @@ def get_parser():
     parser.add_argument('-nep', '--epochs',
                         type=int,
                         help='number of epochs to train for',
-                        default=100)
+                        default=500)
 
     parser.add_argument('-lr', '--learning_rate',
                         type=float,
                         help='learning rate for the model, default=0.001',
-                        default=0.001)
+                        default=0.005)
 
     parser.add_argument('-lrS', '--lr_scheduler_step',
                         type=int,
@@ -35,15 +35,20 @@ def get_parser():
                         help='StepLR learning rate scheduler gamma, default=0.5',
                         default=0.5)
 
+    parser.add_argument('-size', '--img_size',
+                        type=int,
+                        help='size of image, default=28',
+                        default=28)
+
     parser.add_argument('-its', '--iterations',
                         type=int,
                         help='number of episodes per epoch, default=100',
-                        default=100)
+                        default=5000)
 
     parser.add_argument('-cTr', '--classes_per_it_tr',
                         type=int,
-                        help='number of random classes per episode for training, default=60',
-                        default=60)
+                        help='number of random classes per episode for training, default=3',
+                        default=600)
 
     parser.add_argument('-nsTr', '--num_support_tr',
                         type=int,
@@ -57,8 +62,8 @@ def get_parser():
 
     parser.add_argument('-cVa', '--classes_per_it_val',
                         type=int,
-                        help='number of random classes per episode for validation, default=5',
-                        default=5)
+                        help='number of random classes per episode for validation, default=2',
+                        default=500)
 
     parser.add_argument('-nsVa', '--num_support_val',
                         type=int,
@@ -67,8 +72,8 @@ def get_parser():
 
     parser.add_argument('-nqVa', '--num_query_val',
                         type=int,
-                        help='number of samples per class to use as query for validation, default=15',
-                        default=15)
+                        help='number of samples per class to use as query for validation, default=5',
+                        default=5)
 
     parser.add_argument('-seed', '--manual_seed',
                         type=int,

@@ -1,15 +1,16 @@
 # coding=utf-8
 from prototypical_batch_sampler import PrototypicalBatchSampler
 from prototypical_loss import prototypical_loss as loss_fn
-from omniglot_dataset import OmniglotDataset
+from chinadrinks_dataset import ChinadrinkDataset
 from protonet import ProtoNet
 from parser_util import get_parser
-
+from tensorboardX import SummaryWriter
 from tqdm import tqdm
 import numpy as np
 import torch
 import os
-
+import random
+import shutil
 
 def init_seed(opt):
     '''
@@ -21,8 +22,8 @@ def init_seed(opt):
     torch.cuda.manual_seed(opt.manual_seed)
 
 
-def init_dataset(opt, mode):
-    dataset = OmniglotDataset(mode=mode, root=opt.dataset_root)
+def init_dataset(opt, mode, root):
+    dataset = ChinadrinkDataset(mode=mode, root= root, size = opt.img_size)
     n_classes = len(np.unique(dataset.y))
     #print(type(n_classes))
     #print(dataset.y)
@@ -47,8 +48,9 @@ def init_sampler(opt, labels, mode):
                                     iterations=opt.iterations)
 
 
-def init_dataloader(opt, mode):
-    dataset = init_dataset(opt, mode)
+def init_dataloader(opt, mode, root):
+    dataset = init_dataset(opt, mode, root)
+    #labels = [int(x) for x in dataset.y]
     sampler = init_sampler(opt, dataset.y, mode)
     dataloader = torch.utils.data.DataLoader(dataset, batch_sampler=sampler)
     return dataloader
@@ -90,9 +92,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
     '''
     Train the model with the prototypical learning algorithm
     '''
-
+    writer = SummaryWriter('/home/caffe/orbix/Prototypical-Networks-for-Few-shot-Learning-PyTorch/logs/Chinadrink_Protonet_2')
     device = 'cuda:0' if torch.cuda.is_available() and opt.cuda else 'cpu'
-
     if val_dataloader is None:
         best_state = None
     train_loss = []
@@ -107,9 +108,11 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
     for epoch in range(opt.epochs):
         print('=== Epoch: {} ==='.format(epoch))
         tr_iter = iter(tr_dataloader)
+        
+
         model.train()
         for batch in tqdm(tr_iter):
-            #print(batch)
+
             optim.zero_grad()
             x, y = batch
             x, y = x.to(device), y.to(device)
@@ -120,10 +123,21 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             optim.step()
             train_loss.append(loss.item())
             train_acc.append(acc.item())
+
+            writer.add_scalar('Training loss per episode',loss.item(),len(train_loss))
+            writer.add_scalar('Training accuracy per episode', acc.item(), len(train_acc))
+
         avg_loss = np.mean(train_loss[-opt.iterations:])
         avg_acc = np.mean(train_acc[-opt.iterations:])
+
+        writer.add_scalar('Training loss per epoch',avg_loss, epoch+1)
+        writer.add_scalar('Training accuracy per epoch',avg_acc, epoch+1)
+
         print('Avg Train Loss: {}, Avg Train Acc: {}'.format(avg_loss, avg_acc))
         lr_scheduler.step()
+        
+        writer.add_scalar('Learning rate', lr.scheduler.step(),len(train_loss)) 
+
         if val_dataloader is None:
             continue
         val_iter = iter(val_dataloader)
@@ -136,8 +150,16 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
                                 n_support=opt.num_support_val)
             val_loss.append(loss.item())
             val_acc.append(acc.item())
+
+            writer.add_scalar('Validation loss per episode',loss.item(),len(val_loss))
+            writer.add_scalar('Validation accuracy per episode',acc.item(),len(val_acc))
+
         avg_loss = np.mean(val_loss[-opt.iterations:])
         avg_acc = np.mean(val_acc[-opt.iterations:])
+
+        writer.add_scalar('Validation loss per epoch',avg_loss,epoch+1)
+        writer.add_scalar('Validation accuracy per epoch',avg_acc,epoch+1)
+
         postfix = ' (Best)' if avg_acc >= best_acc else ' (Best: {})'.format(
             best_acc)
         print('Avg Val Loss: {}, Avg Val Acc: {}{}'.format(
@@ -196,11 +218,25 @@ def eval(opt):
          test_dataloader=test_dataloader,
          model=model)
 
+def split_dataset(filepath, files):
+    if os.path.exists(filepath):
+        shutil.rmtree(filepath)
+
+    #print(filepath) 
+    for img in files:
+        
+        path = os.path.join(filepath,os.path.basename(os.path.dirname(img)))
+        #print(path) 
+        if not os.path.exists(path):
+            os.makedirs(path)
+        shutil.copy(img,path)
+
 
 def main():
     '''
     Initialize everything and train
     '''
+    
     options = get_parser().parse_args()
     if not os.path.exists(options.experiment_root):
         os.makedirs(options.experiment_root)
@@ -210,10 +246,46 @@ def main():
 
     init_seed(options)
 
-    tr_dataloader = init_dataloader(options, 'train')
-    val_dataloader = init_dataloader(options, 'val')
+    dataset_root = options.dataset_root
+    train_split = 0.7
+    val_split = 0.1
+    test_split = 0.2
+
+    image_folders = [os.path.join(dataset_root, SKU, image) for SKU in os.listdir(dataset_root) \
+                    if os.path.isdir(os.path.join(dataset_root, SKU)) for image in os.listdir(os.path.join(dataset_root, SKU))]
+
+    total_num = len(image_folders)
+    train_num = int(train_split*total_num)
+    val_num = int(val_split*total_num)
+    test_num = total_num - (train_num + val_num)
+
+    random.seed(0)
+    random.shuffle(image_folders)
+
+    metatrain = image_folders[:train_num]
+    print("No: of Images in train:", len(metatrain))
+    metaval = image_folders[train_num:train_num+val_num]
+    print("No: of images in validation: ", len(metaval))
+    metatest = image_folders[train_num+val_num:]
+    print("No: of images in test: ", len(metatest))
+
+    root_folder = '/home/caffe/data/'
+
+    train_folder = root_folder +'train'
+    val_folder = root_folder+'val'
+    test_folder = root_folder+'test'
+
+    split_dataset(train_folder, metatrain)
+    split_dataset(val_folder, metaval)
+    split_dataset(test_folder, metatest)
+    
+
+
+    tr_dataloader = init_dataloader(options, 'train', root = train_folder)
+    
+    val_dataloader = init_dataloader(options, 'val', root = val_folder)
     # trainval_dataloader = init_dataloader(options, 'trainval')
-    test_dataloader = init_dataloader(options, 'test')
+    test_dataloader = init_dataloader(options, 'test', root = test_folder)
 
     model = init_protonet(options)
     optim = init_optim(options, model)

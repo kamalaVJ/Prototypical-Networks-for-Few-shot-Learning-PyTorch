@@ -51,18 +51,26 @@ class PrototypicalBatchSampler(object):
         '''
         spc = self.sample_per_class
         cpi = self.classes_per_it
-
+        #print(len(self))
         for it in range(self.iterations):
             batch_size = spc * cpi
+            #print(batch_size)
             batch = torch.LongTensor(batch_size)
             c_idxs = torch.randperm(len(self.classes))[:cpi]
+            #print(c_idxs)
             for i, c in enumerate(self.classes[c_idxs]):
+                #print('i',i,'c',c)
                 s = slice(i * spc, (i + 1) * spc)
+                #print(s)
                 # FIXME when torch.argwhere will exists
                 label_idx = torch.arange(len(self.classes)).long()[self.classes == c].item()
+                #print(label_idx)
                 sample_idxs = torch.randperm(self.numel_per_class[label_idx])[:spc]
+                #print(sample_idxs)
                 batch[s] = self.indexes[label_idx][sample_idxs]
+
             batch = batch[torch.randperm(len(batch))]
+            #print(len(batch))
             yield batch
 
     def __len__(self):
