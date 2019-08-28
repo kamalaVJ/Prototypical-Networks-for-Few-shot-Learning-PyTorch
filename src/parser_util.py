@@ -18,17 +18,17 @@ def get_parser():
     parser.add_argument('-nep', '--epochs',
                         type=int,
                         help='number of epochs to train for',
-                        default=500)
+                        default=100)
 
     parser.add_argument('-lr', '--learning_rate',
                         type=float,
                         help='learning rate for the model, default=0.001',
-                        default=0.005)
+                        default=0.05)
 
     parser.add_argument('-lrS', '--lr_scheduler_step',
                         type=int,
                         help='StepLR learning rate scheduler step, default=20',
-                        default=20)
+                        default=10)
 
     parser.add_argument('-lrG', '--lr_scheduler_gamma',
                         type=float,
@@ -43,7 +43,7 @@ def get_parser():
     parser.add_argument('-its', '--iterations',
                         type=int,
                         help='number of episodes per epoch, default=100',
-                        default=5000)
+                        default=500)
 
     parser.add_argument('-cTr', '--classes_per_it_tr',
                         type=int,
@@ -63,7 +63,7 @@ def get_parser():
     parser.add_argument('-cVa', '--classes_per_it_val',
                         type=int,
                         help='number of random classes per episode for validation, default=2',
-                        default=500)
+                        default=50)
 
     parser.add_argument('-nsVa', '--num_support_val',
                         type=int,

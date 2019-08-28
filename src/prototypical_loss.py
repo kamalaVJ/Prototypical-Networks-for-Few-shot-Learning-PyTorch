@@ -31,6 +31,8 @@ def euclidean_dist(x, y):
     x = x.unsqueeze(1).expand(n, m, d)
     y = y.unsqueeze(0).expand(n, m, d)
 
+    torch.cuda.empty_cache()
+
     return torch.pow(x - y, 2).sum(2)
 
 
@@ -50,8 +52,8 @@ def prototypical_loss(input, target, n_support):
     - n_support: number of samples to keep in account when computing
       barycentres, for each one of the current classes
     '''
-    target_cpu = target.to('cpu')
-    input_cpu = input.to('cpu')
+    target_cpu = target.cuda()
+    input_cpu = input.cuda()
 
     def supp_idxs(c):
         # FIXME when torch will support where as np
@@ -70,7 +72,7 @@ def prototypical_loss(input, target, n_support):
     # FIXME when torch will support where as np
     query_idxs = torch.stack(list(map(lambda c: target_cpu.eq(c).nonzero()[n_support:], classes))).view(-1)
 
-    query_samples = input.to('cpu')[query_idxs]
+    query_samples = input.cuda()[query_idxs]
     dists = euclidean_dist(query_samples, prototypes)
 
     log_p_y = F.log_softmax(-dists, dim=1).view(n_classes, n_query, -1)
@@ -78,9 +80,11 @@ def prototypical_loss(input, target, n_support):
     target_inds = torch.arange(0, n_classes)
     target_inds = target_inds.view(n_classes, 1, 1)
     target_inds = target_inds.expand(n_classes, n_query, 1).long()
+    target_inds = target_inds.cuda()
 
     loss_val = -log_p_y.gather(2, target_inds).squeeze().view(-1).mean()
     _, y_hat = log_p_y.max(2)
     acc_val = y_hat.eq(target_inds.squeeze()).float().mean()
+    torch.cuda.empty_cache()
 
     return loss_val,  acc_val

@@ -1,5 +1,5 @@
 import torch.nn as nn
-
+import torch
 
 def conv_block(in_channels, out_channels):
     '''
@@ -25,8 +25,11 @@ class ProtoNet(nn.Module):
             conv_block(hid_dim, hid_dim),
             conv_block(hid_dim, hid_dim),
             conv_block(hid_dim, z_dim),
+            nn.Dropout2d(p=0.25)
+
         )
 
     def forward(self, x):
+        #torch.cuda.empty_cache()
         x = self.encoder(x)
         return x.view(x.size(0), -1)

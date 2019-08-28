@@ -53,15 +53,19 @@ def init_dataloader(opt, mode, root):
     #labels = [int(x) for x in dataset.y]
     sampler = init_sampler(opt, dataset.y, mode)
     dataloader = torch.utils.data.DataLoader(dataset, batch_sampler=sampler)
+    torch.cuda.empty_cache()
     return dataloader
 
 
-def init_protonet(opt):
+def init_protonet(opt, pretrained_file= "", pretrained = False):
     '''
     Initialize the ProtoNet
     '''
     device = 'cuda:0' if torch.cuda.is_available() and opt.cuda else 'cpu'
     model = ProtoNet().to(device)
+    if(pretrained):
+        model.load_state_dict(torch.load(pretrained_file))
+        print("Loaded pre-trained model")
     return model
 
 
@@ -92,8 +96,9 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
     '''
     Train the model with the prototypical learning algorithm
     '''
-    writer = SummaryWriter('/home/caffe/orbix/Prototypical-Networks-for-Few-shot-Learning-PyTorch/logs/Chinadrink_Protonet_2')
+    writer = SummaryWriter('/home/caffe/orbix/Prototypical-Networks-for-Few-shot-Learning-PyTorch/logs/Chinadrink_Protonet_22_dropout')
     device = 'cuda:0' if torch.cuda.is_available() and opt.cuda else 'cpu'
+    torch.cuda.empty_cache()
     if val_dataloader is None:
         best_state = None
     train_loss = []
@@ -106,11 +111,11 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
     last_model_path = os.path.join(opt.experiment_root, 'last_model.pth')
 
     for epoch in range(opt.epochs):
+        torch.cuda.empty_cache()
         print('=== Epoch: {} ==='.format(epoch))
         tr_iter = iter(tr_dataloader)
-        
-
         model.train()
+        torch.cuda.empty_cache()
         for batch in tqdm(tr_iter):
 
             optim.zero_grad()
@@ -121,6 +126,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
                                 n_support=opt.num_support_tr)
             loss.backward()
             optim.step()
+            torch.cuda.empty_cache()
             train_loss.append(loss.item())
             train_acc.append(acc.item())
 
@@ -136,7 +142,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
         print('Avg Train Loss: {}, Avg Train Acc: {}'.format(avg_loss, avg_acc))
         lr_scheduler.step()
         
-        writer.add_scalar('Learning rate', lr.scheduler.step(),len(train_loss)) 
+        writer.add_scalar('Learning rate', lr_scheduler.get_lr()[0],len(train_loss)) 
 
         if val_dataloader is None:
             continue
@@ -148,6 +154,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             model_output = model(x)
             loss, acc = loss_fn(model_output, target=y,
                                 n_support=opt.num_support_val)
+
+            torch.cuda.empty_cache()
             val_loss.append(loss.item())
             val_acc.append(acc.item())
 
@@ -168,6 +176,8 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
             torch.save(model.state_dict(), best_model_path)
             best_acc = avg_acc
             best_state = model.state_dict()
+    
+        torch.cuda.empty_cache()
 
     torch.save(model.state_dict(), last_model_path)
 
@@ -183,6 +193,7 @@ def test(opt, test_dataloader, model):
     Test the model trained with the prototypical learning algorithm
     '''
     device = 'cuda:0' if torch.cuda.is_available() and opt.cuda else 'cpu'
+    writer = SummaryWriter('/home/caffe/orbix/Prototypical-Networks-for-Few-shot-Learning-PyTorch/logs/Chinadrink_Protonet_22_dropout')
     avg_acc = list()
     for epoch in range(10):
         test_iter = iter(test_dataloader)
@@ -194,6 +205,7 @@ def test(opt, test_dataloader, model):
                              n_support=opt.num_support_val)
             avg_acc.append(acc.item())
     avg_acc = np.mean(avg_acc)
+    writer.add_scalar("Test accuracy",avg_acc)
     print('Test Acc: {}'.format(avg_acc))
 
     return avg_acc
@@ -203,13 +215,6 @@ def eval(opt):
     '''
     Initialize everything and train
     '''
-    options = get_parser().parse_args()
-
-    if torch.cuda.is_available() and not options.cuda:
-        print("WARNING: You have a CUDA device, so you should probably run with --cuda")
-
-    init_seed(options)
-    test_dataloader = init_dataset(options)[-1]
     model = init_protonet(options)
     model_path = os.path.join(opt.experiment_root, 'best_model.pth')
     model.load_state_dict(torch.load(model_path))
@@ -282,12 +287,19 @@ def main():
 
 
     tr_dataloader = init_dataloader(options, 'train', root = train_folder)
+    torch.cuda.empty_cache()
     
     val_dataloader = init_dataloader(options, 'val', root = val_folder)
+
+    torch.cuda.empty_cache()
     # trainval_dataloader = init_dataloader(options, 'trainval')
     test_dataloader = init_dataloader(options, 'test', root = test_folder)
 
-    model = init_protonet(options)
+    torch.cuda.empty_cache()
+
+    filepath = '/home/caffe/orbix/Prototypical-Networks-for-Few-shot-Learning-PyTorch/output/best_model.pth'
+
+    model = init_protonet(opt = options,pretrained_file = filepath,  pretrained = True)
     optim = init_optim(options, model)
     lr_scheduler = init_lr_scheduler(options, optim)
     res = train(opt=options,
