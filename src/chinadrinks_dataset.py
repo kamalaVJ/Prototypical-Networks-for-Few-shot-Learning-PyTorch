@@ -111,7 +111,7 @@ def get_current_classes(fname):
 		#Image.open(img_path)
 		temp = [os.path.join(img_path, img_file) for img_file in os.listdir(img_path)]
 		
-		if len(temp) >= 5:
+		if len(temp) >= 10:
 
 			classes.append(os.path.basename(img_path))
 
@@ -119,7 +119,7 @@ def get_current_classes(fname):
 	image_folders = [os.path.join(fname, SKU, image) for SKU in classes for image in os.listdir(os.path.join(fname, SKU))]
 	#print(len(image_folders))
 
-	print("== Dataset: Found %d classes with 15 samples" %len(classes))
+	print("== Dataset: Found %d classes with 10 samples" %len(classes))
 	return classes, image_folders
 
 
@@ -145,14 +145,14 @@ def load_img(path, idx):
 			dataBytesIO = BytesIO(bytimg)
 		'''
 		try:
-			x = Image.open(path).convert("L")
+			x = Image.open(path).convert("RGB")  #L for grayscale
 
 			IMG_CACHE[path] = x
 			x = x.rotate(float(rot))
 			x = x.resize((28,28))
 			#print(x.size)
 
-			shape = 1, x.size[0], x.size[1]
+			shape = 3, x.size[0], x.size[1]
 			x = np.array(x, np.float32, copy=False)
 			#print(x.shape)
 			x = 1.0 - torch.from_numpy(x)

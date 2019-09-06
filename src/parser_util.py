@@ -18,12 +18,12 @@ def get_parser():
     parser.add_argument('-nep', '--epochs',
                         type=int,
                         help='number of epochs to train for',
-                        default=1)
+                        default=100)
 
     parser.add_argument('-lr', '--learning_rate',
                         type=float,
                         help='learning rate for the model, default=0.001',
-                        default=0.05)
+                        default=0.005)
 
     parser.add_argument('-lrS', '--lr_scheduler_step',
                         type=int,
@@ -43,12 +43,12 @@ def get_parser():
     parser.add_argument('-its', '--iterations',
                         type=int,
                         help='number of episodes per epoch, default=100',
-                        default=1)
+                        default=500)
 
     parser.add_argument('-cTr', '--classes_per_it_tr',
                         type=int,
                         help='number of random classes per episode for training, default=3',
-                        default=997)
+                        default=500)
 
     parser.add_argument('-nsTr', '--num_support_tr',
                         type=int,
@@ -58,22 +58,22 @@ def get_parser():
     parser.add_argument('-nqTr', '--num_query_tr',
                         type=int,
                         help='number of samples per class to use as query for training, default=5',
-                        default=10)
+                        default=5)
 
     parser.add_argument('-cVa', '--classes_per_it_val',
                         type=int,
                         help='number of random classes per episode for validation, default=2',
-                        default=508)
+                        default=500)
 
     parser.add_argument('-nsVa', '--num_support_val',
                         type=int,
                         help='number of samples per class to use as support for validation, default=5',
-                        default=2)
+                        default=5)
 
     parser.add_argument('-nqVa', '--num_query_val',
                         type=int,
                         help='number of samples per class to use as query for validation, default=5',
-                        default=3)
+                        default=5)
 
     parser.add_argument('-seed', '--manual_seed',
                         type=int,

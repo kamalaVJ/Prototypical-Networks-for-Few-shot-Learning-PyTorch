@@ -1,9 +1,9 @@
 # coding=utf-8
 from prototypical_batch_sampler import PrototypicalBatchSampler
 from prototypical_loss import prototypical_loss as loss_fn
-from chinadrinks_dataset import ChinadrinkDataset
-from protonet import ProtoNet
-from parser_util import get_parser
+from chinadrinks_dataset_gray import ChinadrinkDataset
+from protonet_gray import ProtoNet
+from parser_util_extract import get_parser
 from tensorboardX import SummaryWriter
 from tqdm import tqdm
 import numpy as np
@@ -76,7 +76,7 @@ def test(opt, test_dataloader, model):
     '''
     device = 'cuda:0' if torch.cuda.is_available() and opt.cuda else 'cpu'
     avg_acc = list()
-    for epoch in range(10):
+    for epoch in range(1):
         test_iter = iter(test_dataloader)
         for batch in test_iter:
             x, y = batch
@@ -106,9 +106,9 @@ def main():
     init_seed(options)
 
 
-    test_folder = '/home/caffe/data/chinadrink_test/all_cropped_images/'
+    test_folder = '/home/caffe/data/ccna_prod_test/all_cropped_images/'
 
-    filepath = '/home/caffe/orbix/Prototypical-Networks-for-Few-shot-Learning-PyTorch/output/best_model_65.pth'
+    filepath = '/home/caffe/orbix/Prototypical-Networks-for-Few-shot-Learning-PyTorch/output/best_model.pth'
 
 
     

@@ -3,7 +3,7 @@ from prototypical_batch_sampler import PrototypicalBatchSampler
 from prototypical_loss import prototypical_loss as loss_fn
 from chinadrinks_dataset import ChinadrinkDataset
 from protonet import ProtoNet
-from parser_util import get_parser
+from parser_util_extract import get_parser
 from tensorboardX import SummaryWriter
 from tqdm import tqdm
 import numpy as np
@@ -150,15 +150,15 @@ def main():
     test_folder = '/home/caffe/data/chinadrink_test/all_cropped_images/'
 
     
-    filepath = '/home/caffe/orbix/Prototypical-Networks-for-Few-shot-Learning-PyTorch/output/best_model_65.pth'
+    filepath = '/home/caffe/orbix/Prototypical-Networks-for-Few-shot-Learning-PyTorch/output/best_model_rgb28.pth'
     train_features_file = '/home/caffe/data/chinadrink'
     test_features_file = '/home/caffe/data/chinadrink'
 
     
     '''
     tr_dataloader = init_dataloader(options, 'train', root = train_folder)
-
     '''
+    
     model = init_protonet(opt = options,pretrained_file = filepath,  pretrained = True)
     '''
     train_features, train_labels = train(opt=options,
@@ -166,9 +166,9 @@ def main():
                 model=model)
     
     #save train features
-    np.save(train_features_file+'train_features_exp', train_features.cpu().detach().numpy())
+    np.save(train_features_file+'train_features_rgb', train_features.cpu().detach().numpy())
     #save train labels
-    with open(train_features_file+'train_labels.pkl','wb') as f:
+    with open(train_features_file+'train_labels_rgb.pkl','wb') as f:
         pickle.dump(train_labels.cpu(),f)
     print('Loaded train features/labels')
     '''
@@ -179,9 +179,9 @@ def main():
          model=model)
     print(test_features.size())
     #save test features
-    np.save(test_features_file+'test_features_exp', test_features.cpu().detach().numpy())
+    np.save(test_features_file+'test_features_rgb', test_features.cpu().detach().numpy())
     #save test labels
-    with open(test_features_file+'test_labels.pkl','wb') as f:
+    with open(test_features_file+'test_labels_rgb.pkl','wb') as f:
         pickle.dump(test_labels.cpu(),f)
 
     

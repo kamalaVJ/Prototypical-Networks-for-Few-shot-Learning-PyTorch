@@ -96,7 +96,7 @@ def train(opt, tr_dataloader, model, optim, lr_scheduler, val_dataloader=None):
     '''
     Train the model with the prototypical learning algorithm
     '''
-    writer = SummaryWriter('/home/caffe/orbix/Prototypical-Networks-for-Few-shot-Learning-PyTorch/logs/Chinadrink_Protonet_22_dropout')
+    writer = SummaryWriter('/home/caffe/orbix/Prototypical-Networks-for-Few-shot-Learning-PyTorch/logs/Chinadrink_Protonet_rgb64')
     device = 'cuda:0' if torch.cuda.is_available() and opt.cuda else 'cpu'
     torch.cuda.empty_cache()
     if val_dataloader is None:
@@ -193,7 +193,7 @@ def test(opt, test_dataloader, model):
     Test the model trained with the prototypical learning algorithm
     '''
     device = 'cuda:0' if torch.cuda.is_available() and opt.cuda else 'cpu'
-    writer = SummaryWriter('/home/caffe/orbix/Prototypical-Networks-for-Few-shot-Learning-PyTorch/logs/Chinadrink_Protonet_22_dropout')
+    writer = SummaryWriter('/home/caffe/orbix/Prototypical-Networks-for-Few-shot-Learning-PyTorch/logs/Chinadrink_Protonet_rgb64')
     avg_acc = list()
     for epoch in range(10):
         test_iter = iter(test_dataloader)
@@ -297,7 +297,7 @@ def main():
 
     torch.cuda.empty_cache()
 
-    filepath = '/home/caffe/orbix/Prototypical-Networks-for-Few-shot-Learning-PyTorch/output/best_model.pth'
+    filepath = '/home/caffe/orbix/Prototypical-Networks-for-Few-shot-Learning-PyTorch/output/best_model_rgb28.pth'
 
     model = init_protonet(opt = options,pretrained_file = filepath,  pretrained = True)
     optim = init_optim(options, model)
